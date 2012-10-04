@@ -1,15 +1,17 @@
 #!/bin/bash
 #
-# Build a single node from a given JSON object describing
-# build options.
+# Build a single node from a given JSON object describing build options.
+# This is called with the cwd a fresh node.git clone. The node will be
+# built (per the given options) and packaged up to
+# 'sdcnode-$version-$compilerTag-$buildTag-$buildStamp.tgz'
 #
 # Usage:
-#   ./tools/build-a-node BUILD-OPTS BUILD-DIR BUILD-STAMP
+#   ./tools/build-a-node BUILD-OPTS BUILD-STAMP
 #
 # Example:
-#   ./tools/build-a-node '{"version": "v0.6.18"}' `pwd`/build/nodes/0 master-gcafe0123-20120203T120000Z
+#   ./tools/build-a-node '{"version": "v0.6.18"}' master-gcafe0123-20120203T120000Z
 #
-# TODO: document supported build options
+# Supported build options:
 # - version:
 # - configure_flags:
 # - build_env:
@@ -20,28 +22,21 @@
 #   git repo (e.g. an npm fork). This is only intended for pre-release experimental
 #   builds. The default repo URL is "git://github.com/isaacs/npm.git"
 
-
 export PS4='${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 set -o xtrace
 set -o errexit
 set -o pipefail
 
+
 TOP=$(cd $(dirname $0)/../ >/dev/null; pwd)
 buildOpts=$1
-buildDir=$2
-buildStamp=$3
+buildStamp=$2
+
 
 echo ""
-echo "# Build a node in $buildDir with this config:"
+echo "# Building node in `pwd` with this config:"
 echo "$buildOpts" | json
 
-if [[ -d $buildDir ]]; then
-    rm -rf $buildDir
-fi
-mkdir -p $buildDir
-
-cp -PR $TOP/build/src $buildDir/src
-cd $buildDir/src
 version=$(echo "$buildOpts" | json version)
 git checkout $version
 
@@ -63,7 +58,7 @@ if [[ -z "$configureFlags" ]]; then
 fi
 buildEnv=$(echo "$buildOpts" | json build_env)
 eval "export $buildEnv"
-./configure $configureFlags --prefix=$buildDir/node
+./configure $configureFlags --prefix=`pwd`/sdcnode-build/node
 make V=1 CC=/opt/local/bin/gcc CXX=/opt/local/bin/g++
 make V=1 CC=/opt/local/bin/gcc CXX=/opt/local/bin/g++ install
 
@@ -73,5 +68,5 @@ if [[ -n "$buildTag" ]]; then
     buildTag=-$buildTag
 fi
 gccVersion=$(gcc --version | head -1 | awk '{print $NF}')
-cd $buildDir
-tar czf sdcnode-$version-gcc$gccVersion$buildTag-$buildStamp.tgz node
+packageName=sdcnode-$version-gcc$gccVersion$buildTag-$buildStamp.tgz
+cd sdcnode-build && tar czf ../$packageName node

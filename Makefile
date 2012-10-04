@@ -10,7 +10,7 @@ include ./tools/mk/Makefile.defs
 #
 # Files
 #
-CLEAN_FILES += build/nodes bits
+CLEAN_FILES += bits
 DISTCLEAN_FILES += build
 DOC_FILES += index.restdown
 
@@ -33,10 +33,14 @@ build/src:
 nodesrc: | build/src
 	cd build/src && git checkout master \
 		&& git fetch origin && git pull --rebase origin master
+	rm -rf build/src.tgz
+	cd build/src && tar czf ../src.tgz .
 
 .PHONY: nodes
 nodes: nodesrc
-	./tools/build-all-nodes $(TOP)/build/nodes $(STAMP)
+	rm -rf bits/sdcnode
+	mkdir -p bits/sdcnode
+	./tools/build-all-nodes $(STAMP)
 
 .PHONY: bits
 bits:

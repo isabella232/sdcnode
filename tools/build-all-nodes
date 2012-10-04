@@ -3,28 +3,88 @@
 # Build all node configurations in "../nodeconfigs.json".
 #
 # Usage:
-#   ./tools/build-all-node BUILD-DIR BUILD-STAMP
+#   ./tools/build-all-node BUILD-STAMP
 #
 
-#set -o xtrace
+if [[ -n "$TRACE" ]]; then
+    export PS4='${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -o xtrace
+fi
 set -o errexit
 set -o pipefail
 
+
+#---- globals/config
+
 TOP=$(cd $(dirname $0)/../ >/dev/null; pwd)
-buildDir=$1
-buildStamp=$2
 
-[[ ! -d $buildDir ]] && mkdir -p $buildDir
+JSON=$TOP/tools/json
+if [[ -f $HOME/.ssh/automation.id_rsa ]]; then
+  id_opt="-o IdentityFile=$HOME/.ssh/automation.id_rsa"
+fi
+SCP="scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $id_opt"
+SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $id_opt"
 
-numConfigs=$(cat $TOP/nodeconfigs.json | json length)
-for (( i=0; i<$numConfigs; i++ ))
-do
-    nodeBuildDir=$buildDir/$i
-    if [[ ! -d $nodeBuildDir ]]; then
-        $TOP/tools/build-a-node "$(cat $TOP/nodeconfigs.json | json $i)" $buildDir/$i $buildStamp
-    else
-        echo "# nodeconfig $i: $nodeBuildDir already exists"
-    fi
+
+#---- internal support stuff
+
+
+#---- mainline
+
+# Input args.
+buildStamp=$1
+
+mkdir -p $TOP/build
+
+numConfigs=$(cat $TOP/nodeconfigs.json | $JSON length)
+imageUuids=$(cat $TOP/nodeconfigs.json | $JSON -a image_uuid | sort | uniq)
+for imageUuid in $imageUuids; do
+    imageConfigs=$(cat $TOP/nodeconfigs.json | $JSON -c "image_uuid=='$imageUuid'")
+    numImageConfigs=$(echo "$imageConfigs" | $JSON length)
+    echo ""
+    echo "# Create VM using image $imageUuid, for $numImageConfigs node config(s)."
+    buildVmLogin=root@localhost
+    XXX
+
+    buildDir=/var/tmp/sdcnode-$$
+    echo "# Copy node src tarball into build VM ($buildVmLogin:$buildDir)."
+    $SSH -T $buildVmLogin <<EOF
+rm -rf $buildDir
+mkdir -p $buildDir
+EOF
+    $SCP build/src.tgz tools/build-a-node $buildVmLogin:$buildDir/
+
+    for (( i=0; i<$numImageConfigs; i++ )); do
+        echo ""
+        echo "# Build node config $i in build VM."
+        configFile=$TOP/build/$imageUuid-$i-config.json
+        echo "$imageConfigs" | $JSON -o json-0 $i > $configFile
+        $SCP $configFile $buildVmLogin:$buildDir/
+        $SSH -T $buildVmLogin <<EOF
+set -o xtrace
+set -o errexit
+rm -rf $buildDir/$i
+mkdir $buildDir/$i
+cd $buildDir/$i
+gtar xf ../src.tgz
+../build-a-node "\$(cat ../*-$i-config.json)" $buildStamp
+EOF
+        $SCP $buildVmLogin:$buildDir/$i/sdcnode-*.tgz bits/sdcnode/
+    done
+
+    # Cleanup
+    $SSH $buildVmLogin rm -rf $buildDir
 done
+
+
+#for (( i=0; i<$numImageUuids; i++ ))
+#do
+#    nodeBuildDir=$buildDir/$i
+#    if [[ ! -d $nodeBuildDir ]]; then
+#        $TOP/tools/build-a-node "$(cat $TOP/nodeconfigs.json | $JSON $i)" $buildDir/$i $buildStamp
+#    else
+#        echo "# nodeconfig $i: $nodeBuildDir already exists"
+#    fi
+#done
 
 

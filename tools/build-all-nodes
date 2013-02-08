@@ -31,6 +31,8 @@ SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $id_opt"
 
 #---- mainline
 
+#XXX:TODO: a trap on exit to clean up the buildVm
+
 # Input args.
 buildStamp=$1
 
@@ -43,8 +45,8 @@ for imageUuid in $imageUuids; do
     numImageConfigs=$(echo "$imageConfigs" | $JSON length)
     echo ""
     echo "# Create VM using image $imageUuid, for $numImageConfigs node config(s)."
-    buildVmLogin=root@localhost
-    XXX
+    buildVmInfo=$($TOP/tools/create-a-vm $imageUuid)
+    buildVmLogin=root@$(echo "$buildVmInfo" | json ip)
 
     buildDir=/var/tmp/sdcnode-$$
     echo "# Copy node src tarball into build VM ($buildVmLogin:$buildDir)."
@@ -75,16 +77,4 @@ EOF
     # Cleanup
     $SSH $buildVmLogin rm -rf $buildDir
 done
-
-
-#for (( i=0; i<$numImageUuids; i++ ))
-#do
-#    nodeBuildDir=$buildDir/$i
-#    if [[ ! -d $nodeBuildDir ]]; then
-#        $TOP/tools/build-a-node "$(cat $TOP/nodeconfigs.json | $JSON $i)" $buildDir/$i $buildStamp
-#    else
-#        echo "# nodeconfig $i: $nodeBuildDir already exists"
-#    fi
-#done
-
 

@@ -1,0 +1,110 @@
+#!/bin/bash
+#
+# Create a VM in which to build a node and write out (on stdout) a JSON blob
+# describing it.
+#
+# Usage:
+#   ./tools/create-a-vm IMAGE-UUID
+#
+
+if [[ -n "$TRACE" ]]; then
+    export PS4='${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+    set -o xtrace
+fi
+set -o errexit
+set -o pipefail
+
+
+#---- globals/config
+
+TOP=$(cd $(dirname $0)/../ >/dev/null; pwd)
+
+JSON=$TOP/tools/json
+if [[ -f $HOME/.ssh/automation.id_rsa ]]; then
+    id_opt="-o IdentityFile=$HOME/.ssh/automation.id_rsa"
+fi
+SCP="scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $id_opt"
+SSH="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $id_opt"
+
+# The GZ host to which we ssh to `vmadm create`.
+GZHOST=$(cat gzhosts.json \
+    | $JSON $(($RANDOM % `cat $TOP/gzhosts.json | $JSON length`)) \
+    | $JSON hostname)
+
+# We'll put the created VM UUID here.
+VMUUID=
+
+
+#---- internal support stuff
+
+function fatal {
+  echo "$(basename $0): error: $1"
+  exit 1
+}
+
+function cleanup() {
+  local exit_status=${1:-$?}
+  if [[ -n "$GZHOST" ]]; then
+    if [[ -n "$VMUUID" ]]; then
+      ${SSH} root@$GZHOST "vmadm destroy $VMUUID"
+    fi
+  fi
+  exit $exit_status
+}
+
+
+#---- mainline
+
+# Input args.
+imageUuid=$1
+
+# Mac prefix to use for short-lease DHCP
+# See <https://hub.joyent.com/wiki/display/dev/Development+Lab>
+mac="32:22:12:$(openssl rand -hex 1):$(openssl rand -hex 1):$(openssl rand -hex 1)"
+
+# Build payload and `vmadm create` it.
+echo "{
+  \"brand\": \"joyent-minimal\",
+  \"zfs_io_priority\": 10,
+  \"quota\": 10000,
+  \"ram\": 1024,
+  \"max_physical_memory\": 1024,
+  \"nowait\": true,
+  \"image_uuid\": \"${imageUuid}\",
+  \"alias\": \"sdcnode_temp_image.$$\",
+  \"hostname\": \"sdcnode_temp_image.$$\",
+  \"dns_domain\": \"lab.joyent.dev\",
+  \"resolvers\": [
+    \"8.8.8.8\"
+  ],
+  \"autoboot\": true,
+  \"nics\": [
+    {
+      \"nic_tag\": \"admin\",
+      \"ip\": \"dhcp\",
+      \"mac\": \"${mac}\"
+    }
+  ]
+}" | /usr/vm/sbin/add-userscript $TOP/tools/sdcnode-vm.user-script \
+    | $SSH root@$GZHOST "vmadm create"
+
+VMUUID=$(${SSH} root@$GZHOST "vmadm list -p -o uuid,alias | grep sdcnode_temp_image.$$ | cut -d ':' -f 1")
+
+echo "Waiting for vm $VMUUID to finish setup." >&2
+COMPLETE=
+for i in {30..1}; do 
+    sleep 10
+    echo "Attempt $i." >&2
+    COMPLETE=$($SSH root@$GZHOST zlogin $VMUUID ls /var/svc/setup_complete || true)
+    if [[ -n "$COMPLETE" ]]; then
+        break
+    fi
+done
+if [[ -z "$COMPLETE" ]]; then
+    fatal "VM $VMUUID did not setup in time."
+fi
+VMIP=$($SSH root@$GZHOST zlogin $VMUUID /sbin/ifconfig net0 | grep inet | awk '{print $2}')
+    
+echo "VMUUID is $VMUUID"
+echo "VMIP is $VMIP"
+

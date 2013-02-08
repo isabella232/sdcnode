@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# `vmadm create` user-script used to setup zone for building node.
+#
+
+set -o xtrace
+set -o errexit
+set -o pipefail
+
+PATH=/opt/local/bin:/opt/local/sbin:/usr/bin:/usr/sbin
+
+# SSH setup
+/lib/svc/method/sshd start
+
+mkdir -p ~/.ssh
+cat > ~/.ssh/authorized_keys <<EOK
+ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA2s5twaK3yK3iEW1Ka1rCoE7pENen2ijsZpSCDTxeKL9gzXE/W5Hm7VEp2AY+POWE3sTVmLf+b+mc3+ABCq3UnZgMGgsfZuTmmzQYuWI3yH1m1m3PzOjxF4n+2jWwwZ9JAyuzxQFfch8WPzhoylHEbuIsLc8QKUkr+26VYEA4o3ztK3vwNQ6WqSIfl9zGEak2u6laSQH8AFwodZfamEXfgj4YfM23gDz382aJOVa5q6EnDK01/8yveOM9AxK52y4+40mpQJiBwUTRMtP1irB6sT/zXJCVBkwKAiZnYlb9jHEwU1sN2QOe9rh0LwxO3j0wQuy7FmAtFOqZQlDN5Bki7Q== automation@lab-www-00
+EOK
+chmod 0700 ~/.ssh/
+chmod 0600 ~/.ssh/authorized_keys
+
+
+# Packages needed to build node.
+pkgin -y install gcc-compiler
+
+
+# Signal that we are done.
+touch /var/svc/setup_complete 

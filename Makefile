@@ -15,6 +15,7 @@
 ENGBLD_REQUIRE := $(shell git submodule update --init deps/eng)
 include ./deps/eng/tools/mk/Makefile.defs
 
+NAME=sdcnode
 
 #
 # Files

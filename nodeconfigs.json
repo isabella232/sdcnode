@@ -7,7 +7,7 @@
             "patches/tls-reload-certs-v8.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=x64 --with-dtrace",
-        "gcc_version_prefix": "4.9.",
+        "gcc_version_prefix": "7.",
         "rpath": "$ORIGIN/../lib",
         "include_gcc_runtime_libs": true,
         "build_tag": "gz"
@@ -276,7 +276,7 @@
             "patches/tls-reload-certs-v6.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=x64 --with-dtrace",
-        "gcc_version_prefix": "4.9.",
+        "gcc_version_prefix": "7.",
         "rpath": "$ORIGIN/../lib",
         "include_gcc_runtime_libs": true,
         "build_tag": "gz",

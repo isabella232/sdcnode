@@ -92,8 +92,8 @@
         "image": "1ad363ec-3b83-11e8-8521-2f68a4a34d5d",
         "version": "v6.17.0",
         "patch_files": [
-            "patches/tls-reload-certs-v6.x.patch",
-            "patches/http-keepAliveTimeout-default-0-v6.17+.patch"
+            "patches/http-keepAliveTimeout-default-0-v6.17+.patch",
+            "patches/tls-reload-certs-v6.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=ia32 --with-dtrace",
         "gcc_version_prefix": "4.9.",
@@ -107,8 +107,8 @@
         "comment": "For use by services running in zones. Statically link to OpenSSL and zlib *for now* until OS-1294/TOOLS-130.",
         "version": "v6.17.0",
         "patch_files": [
-            "patches/tls-reload-certs-v6.x.patch",
-            "patches/http-keepAliveTimeout-default-0-v6.17+.patch"
+            "patches/http-keepAliveTimeout-default-0-v6.17+.patch",
+            "patches/tls-reload-certs-v6.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=ia32 --with-dtrace",
         "build_tag": "zone"
@@ -119,8 +119,8 @@
         "comment": "For use by services running in zones. Statically link to OpenSSL and zlib *for now* until OS-1294/TOOLS-130.",
         "version": "v6.17.0",
         "patch_files": [
-            "patches/tls-reload-certs-v6.x.patch",
-            "patches/http-keepAliveTimeout-default-0-v6.17+.patch"
+            "patches/http-keepAliveTimeout-default-0-v6.17+.patch",
+            "patches/tls-reload-certs-v6.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=x64 --with-dtrace",
         "build_tag": "zone64"
@@ -165,6 +165,7 @@
         "image": "18b094b0-eb01-11e5-80c1-175dac7ddf02",
         "version": "v6.17.0",
         "patch_files": [
+            "patches/http-keepAliveTimeout-default-0-v6.17+.patch",
             "patches/tls-reload-certs-v6.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=ia32 --with-dtrace",
@@ -179,6 +180,7 @@
         "comment": "For use by services running in zones. Statically link to OpenSSL and zlib *for now* until OS-1294/TOOLS-130.",
         "version": "v6.17.0",
         "patch_files": [
+            "patches/http-keepAliveTimeout-default-0-v6.17+.patch",
             "patches/tls-reload-certs-v6.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=ia32 --with-dtrace",
@@ -190,6 +192,7 @@
         "comment": "For use by services running in zones. Statically link to OpenSSL and zlib *for now* until OS-1294/TOOLS-130.",
         "version": "v6.17.0",
         "patch_files": [
+            "patches/http-keepAliveTimeout-default-0-v6.17+.patch",
             "patches/tls-reload-certs-v6.x.patch"
         ],
         "configure_flags": "--without-snapshot --dest-cpu=x64 --with-dtrace",

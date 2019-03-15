@@ -37,6 +37,7 @@
         "configure_flags": "--without-snapshot --dest-cpu=x64 --with-dtrace",
         "build_tag": "zone64"
     },
+
     {
         "// image": "sdc-minimal-multiarch-lts 15.4.1",
         "image": "18b094b0-eb01-11e5-80c1-175dac7ddf02",
@@ -75,6 +76,7 @@
         "configure_flags": "--without-snapshot --dest-cpu=x64 --with-dtrace",
         "build_tag": "zone64"
     },
+
     {
         "// image": "sdc-minimal-multiarch-lts 15.4.1",
         "image": "18b094b0-eb01-11e5-80c1-175dac7ddf02",
@@ -87,6 +89,7 @@
         "configure_flags": "--without-snapshot --dest-cpu=ia32 --with-dtrace",
         "build_tag": "zone"
     },
+
     {
         "// image": "minimal-multiarch 18.1.0",
         "image": "1ad363ec-3b83-11e8-8521-2f68a4a34d5d",
